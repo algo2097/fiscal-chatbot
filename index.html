@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        #chat-container {
+            width: 50%;
+            margin: 50px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #chat-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        #chat-messages {
+            padding: 20px;
+            height: 400px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ddd;
+        }
+        .message {
+            margin-bottom: 20px;
+        }
+        .user-message {
+            text-align: right;
+        }
+        .bot-message {
+            text-align: left;
+        }
+        .message span {
+            display: inline-block;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message span {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .bot-message span {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        #chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        #chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        #chat-input button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #chat-input button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">Chatbot</div>
+        <div id="chat-messages"></div>
+        <div id="chat-input">
+            <input type="text" id="user-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        function addMessage(message, sender) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message');
+            messageContainer.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+            const messageContent = document.createElement('span');
+
+            if (typeof message === 'object') {
+                messageContent.textContent = JSON.stringify(message, null, 2);
+            } else {
+                messageContent.textContent = message;
+            }
+
+            messageContainer.appendChild(messageContent);
+            document.getElementById('chat-messages').appendChild(messageContainer);
+            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+            if (!userInput) return;
+            addMessage(userInput, 'user');
+            document.getElementById('user-input').value = '';
+
+            fetch('/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const botResponse = data.result || 'Sorry, I did not understand that.';
+                addMessage(botResponse, 'bot');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('There was an error processing your request.', 'bot');
+            });
+        }
+    </script>
+</body>
+</html>
